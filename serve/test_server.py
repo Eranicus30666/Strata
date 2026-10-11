@@ -140,6 +140,7 @@ class MaxTokens(unittest.TestCase):
                 self.assertEqual(s, 400)
                 self.assertIn("exceeds the context", b["error"]["message"])
                 self.assertIn("\"fit_max_tokens\": true", b["error"]["message"])     # #545: says how to get past it
+                self.assertIn("maximum context length", b["error"]["message"])      # the wording OpenAI clients match
                 self.assertRegex(b["error"]["message"], r"at most \d+ here")
 
     def test_unset_budget_with_a_near_full_prompt(self):
