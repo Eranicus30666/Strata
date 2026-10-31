@@ -7177,7 +7177,10 @@ def make_handler(svc: Service):
             # OpenAI's streaming contract: with "stream_options": {"include_usage": true} the usage rides in its own
             # last chunk, "choices": []. Clients and gateways read it there (LiteLLM ignores a usage that sits on the
             # finish_reason chunk and recounts the tokens itself, too low). Without the option the chunk is unchanged.
-            split_usage = bool((req.get("stream_options") or {}).get("include_usage"))
+            # A value that is not an object is ignored (the spec allows an object or null): an exception here, after the
+            # headers are out, would end the stream with an empty 200.
+            stream_options = req.get("stream_options")
+            split_usage = isinstance(stream_options, dict) and bool(stream_options.get("include_usage"))
             try:
                 for c in chunks:
                     if c is None:

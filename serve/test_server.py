@@ -2050,6 +2050,15 @@ class StreamUsageChunk(unittest.TestCase):
             self.assertGreater(chunks[-1]["usage"]["prompt_tokens"], 0, extra)
             self.assertTrue(all(c["choices"] for c in chunks), extra)
 
+    def test_a_stream_options_that_is_not_an_object_is_ignored(self):
+        # The spec allows an object or null. Anything else used to be served as a plain stream; it must not become an
+        # empty 200 (the usage split runs after the SSE headers are out, so an exception there leaves no body at all).
+        for extra in ({"stream_options": "yes"}, {"stream_options": True}, {"stream_options": 1}, {"stream_options": [1]}):
+            chunks = self.stream(**extra)
+            self.assertEqual(chunks[-1]["choices"][0]["finish_reason"], "stop", extra)
+            self.assertGreater(chunks[-1]["usage"]["prompt_tokens"], 0, extra)
+            self.assertTrue(all(c["choices"] for c in chunks), extra)
+
     def test_same_numbers_as_the_non_streaming_answer(self):
         body = {"model": "m", "messages": [{"role": "user", "content": "hi"}], "max_tokens": 64}
         req = urllib.request.Request(self.base + "/v1/chat/completions", data=json.dumps(body).encode(),
